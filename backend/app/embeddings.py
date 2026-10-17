@@ -37,7 +37,8 @@ class NanoEmbedder:
         # Never exceed the model's own limit (BERT-style models such as bge-small stop at 512).
         native = self._model.max_seq_length or max_tokens
         self._model.max_seq_length = min(max_tokens, native)
-        self.dim = dim or self._model.get_sentence_embedding_dimension()
+        get_dim = getattr(self._model, "get_embedding_dimension", None) or self._model.get_sentence_embedding_dimension
+        self.dim = dim or get_dim()
         self.name = f"{model}@{self.dim}"
         self.batch_size = batch_size
         self._has_prompts = hasattr(self._model, "encode_document") and bool(getattr(self._model, "prompts", None))
