@@ -5,7 +5,7 @@ pyyaml>=6.0
 openpyxl>=3.1
 rank-bm25>=0.2.2
 chromadb>=1.0
-sentence-transformers>=5.0   # runs voyage-4-nano locally
+sentence-transformers>=6.1.0   # runs voyage-4-nano locally
 voyageai>=0.3                # only if EMBED_BACKEND=voyage
 
 # Phase 2+: API and answers
