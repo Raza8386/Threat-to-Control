@@ -24,3 +24,7 @@ dist/
 backend/scripts/phase2_report.json
 backend/evals/answers_detail.json
 backend/evals/*.xlsx
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/*.tsbuildinfo

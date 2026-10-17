@@ -24,7 +24,9 @@ backend/
   data/                # chroma/ and bm25.pkl (generated, gitignored)
 frontend/
   src/pages/Chat.tsx Eval.tsx Architecture.tsx
-  src/lib/sse.ts       # parses guardrail, sources, token, done, error events
+  src/components/Answer.tsx       # safe markdown; only [n] citations become links
+  src/components/EvidenceRail.tsx # sources as colour-coded exhibits (ATT&CK oxblood, OWASP forest, KEV amber)
+  src/lib/sse.ts       # parses guardrail, sources, token, reset, error, done events
 ```
 
 ## Data rules
