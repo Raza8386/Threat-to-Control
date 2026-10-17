@@ -10,7 +10,7 @@ voyageai>=0.3                # only if EMBED_BACKEND=voyage
 # Phase 2+: API and answers
 anthropic>=0.60
 fastapi>=0.115
-uvicorn[standard]>=0.30
+uvicorn[standard]>=0.54.0
 
 # Dev
 pytest>=8
