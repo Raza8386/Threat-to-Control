@@ -6,8 +6,13 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BACKEND_DIR / "data"
+
+# Load backend/.env if present. Real environment variables still win over the file.
+load_dotenv(BACKEND_DIR / ".env", override=False)
 
 
 @dataclass(frozen=True)
