@@ -98,3 +98,25 @@ def test_claude_client_reads_refusal_from_stream_events(monkeypatch):
     assert text == "Partial answer"
     assert llm.stop_reason == "refusal" and llm.stop_category == "cyber"
     assert llm.usage.input_tokens == 900
+
+
+
+def test_error_codes():
+    from app.pipeline import error_code
+
+    class RateLimitError(Exception):
+        status_code = 429
+
+    assert error_code(RuntimeError("Your credit balance is too low")) == "credits"
+    assert error_code(RateLimitError("slow down")) == "rate_limit"
+    assert error_code(type("AuthenticationError", (Exception,), {})("bad key")) == "auth"
+    assert error_code(TimeoutError("Request timed out")) == "timeout"
+    assert error_code(ValueError("?")) == "other"
+
+
+def test_error_event_carries_code_but_generic_message(retriever):  # noqa: F811
+    from app.llm import FailingLLM
+
+    events = list(answer_events("How do attackers perform Kerberoasting?", retriever, FailingLLM()))
+    name, data = events[-1]
+    assert name == "error" and data["code"] == "credits" and "credit" not in data["message"].lower()

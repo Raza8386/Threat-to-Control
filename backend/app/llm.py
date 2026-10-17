@@ -133,7 +133,23 @@ class FakeLLM:
         return self._usage
 
 
+class FailingLLM(FakeLLM):
+    """Test stand-in that fails like an account with no credit (LLM_BACKEND=fake-credits)."""
+
+    def stream(self, system, user, max_tokens=1024):
+        raise RuntimeError("Error code: 400 - Your credit balance is too low to access the Anthropic API.")
+        yield  # pragma: no cover
+
+    def complete(self, system, user, max_tokens=300):
+        if "classify" in system.lower():
+            return super().complete(system, user, max_tokens)
+        raise RuntimeError("Error code: 400 - Your credit balance is too low to access the Anthropic API.")
+
+
 def get_llm(model: str) -> LLM:
-    if os.getenv("LLM_BACKEND", "claude") == "fake":
+    backend = os.getenv("LLM_BACKEND", "claude")
+    if backend == "fake":
         return FakeLLM(model="fake")
+    if backend == "fake-credits":
+        return FailingLLM(model="fake")
     return ClaudeLLM(model)

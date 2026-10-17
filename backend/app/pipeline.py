@@ -80,9 +80,10 @@ def answer_events(
             attempt = _Attempt(prior_cost=first_cost)
             llm = fallback_llm
             yield from _stream_attempt(llm, user_msg, attempt)
-    except Exception as exc:  # network, auth, rate limit
-        log.error("LLM call failed: %s: %s", type(exc).__name__, exc)
-        yield "error", {"message": GENERIC_LLM_ERROR}
+    except Exception as exc:  # network, auth, rate limit, credits
+        code = error_code(exc)
+        log.error("LLM call failed [%s]: %s: %s", code, type(exc).__name__, exc)
+        yield "error", {"message": GENERIC_LLM_ERROR, "code": code}
         return
 
     cost = round(attempt.cost + attempt.prior_cost + guard_cost, 6)
@@ -139,6 +140,26 @@ def _stream_attempt(llm: LLM, user_msg: str, attempt: _Attempt) -> Iterator[Even
         tail = attempt.guard.flush()
         if tail:
             yield "token", {"text": tail}
+
+
+def error_code(exc: Exception) -> str:
+    """Coarse, non-sensitive category for an LLM failure (safe to send to clients and to count in evals)."""
+    name = type(exc).__name__
+    status = getattr(exc, "status_code", None)
+    text = str(exc).lower()
+    if "credit balance" in text or "billing" in text:
+        return "credits"
+    if name == "AuthenticationError" or status == 401 or name == "PermissionDeniedError" or status == 403:
+        return "auth"
+    if name == "RateLimitError" or status == 429:
+        return "rate_limit"
+    if status == 529 or "overloaded" in text:
+        return "overloaded"
+    if "timeout" in name.lower() or "timed out" in text:
+        return "timeout"
+    if name == "APIConnectionError":
+        return "network"
+    return "other"
 
 
 def _ms(t0: float) -> int:

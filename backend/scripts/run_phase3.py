@@ -56,6 +56,13 @@ def main() -> None:
     r = run(["-m", "scripts.debug_answer", PROBE, "--model", "claude-haiku-5-5", "--runs", "1"], capture=True)
     header = next((ln for ln in r.stdout.splitlines() if ln.startswith("===== run")), r.stderr.strip()[-300:])
     print(header)
+    err = (r.stderr or "").lower()
+    if r.returncode and ("credit balance" in err or "billing" in err):
+        stop("Anthropic credit balance is too low. Add credit at console.anthropic.com > Billing, then re-run.")
+    if r.returncode and ("authentication" in err or "401" in err or "api key" in err):
+        stop("The Anthropic API key was rejected. Check ANTHROPIC_API_KEY in backend/.env.")
+    if r.returncode:
+        stop("the probe call to Claude failed; see the error above.")
     if "refusal" in header:
         print("-> the API's safety classifier stopped this answer; the pipeline now resets and retries on the other model.")
     elif "guard tripped: True" in header:
@@ -82,8 +89,18 @@ def main() -> None:
     for a in res.get("answers", []):
         print(f"{a['model']:18s} faithfulness {a['faithfulness']}  citations {a['citation_accuracy']}  "
               f"judged {a['judged_answers']} (failed {a.get('judge_failed')})  fallbacks {a.get('fallbacks')}  "
-              f"refused-both {a.get('refused_both')}  {a['avg_latency_ms']} ms  ${a['avg_cost_usd']}/answer")
+              f"refused-both {a.get('refused_both')}  errors {a.get('errors', 0)}  skipped {a.get('skipped', 0)}  "
+              f"{a['avg_latency_ms']} ms  ${a['avg_cost_usd']}/answer")
     print(f"Failures: {len(res.get('failures', []))}  ->  see the 'Failures' tab")
+    if res.get("stopped_reason"):
+        print(f"\nRUN STOPPED EARLY: {res['stopped_reason']}")
+    codes = {}
+    for f in res.get("failures", []):
+        m = re.match(r"\[(\w+)\]", f.get("detail", "")) if f["kind"] == "error" else None
+        if m:
+            codes[m.group(1)] = codes.get(m.group(1), 0) + 1
+    if codes:
+        print(f"Errors by cause: {codes}  (rate_limit/overloaded -> re-run with --workers 2; credits -> top up)")
     print(f"\nPHASE 3 GATE: {'PASSED' if res.get('gate_passed') else 'FAILED'}  {res.get('gate')}")
     xlsx = BACKEND / "evals" / "Threat-to-Control_Eval_Results.xlsx"
     if xlsx.exists() and sys.platform == "win32":
