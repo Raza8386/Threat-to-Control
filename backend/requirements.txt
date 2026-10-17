@@ -5,7 +5,7 @@ pyyaml>=6.0
 rank-bm25>=0.2.2
 chromadb>=1.0
 sentence-transformers>=5.0   # runs voyage-4-nano locally
-voyageai>=0.3                # only if EMBED_BACKEND=voyage
+voyageai>=0.5.0                # only if EMBED_BACKEND=voyage
 
 # Phase 2+: API and answers
 anthropic>=0.60
