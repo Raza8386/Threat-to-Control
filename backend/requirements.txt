@@ -1,0 +1,14 @@
+# Phase 1: ingest + retrieval
+requests>=2.31
+rank-bm25>=0.2.2
+chromadb>=1.0
+sentence-transformers>=5.0   # runs voyage-4-nano locally
+voyageai>=0.3                # only if EMBED_BACKEND=voyage
+
+# Phase 2+: API and answers
+anthropic>=0.60
+fastapi>=0.115
+uvicorn[standard]>=0.30
+
+# Dev
+pytest>=8
