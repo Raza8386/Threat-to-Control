@@ -33,6 +33,12 @@ class Settings:
     candidates: int = int(os.getenv("RETRIEVE_CANDIDATES", "20"))
     top_k: int = int(os.getenv("RETRIEVE_TOP_K", "6"))
     rrf_k: int = int(os.getenv("RRF_K", "60"))
+    # Bring in an unrepresented source's best chunk only when it is competitive (see Retriever._add_missing_sources).
+    # OWASP has 10 categories vs ~700 techniques and ~1,750 CVEs, so it gets a lower bar.
+    source_bm25_ratio: float = float(os.getenv("SOURCE_BM25_RATIO", "0.8"))
+    owasp_bm25_ratio: float = float(os.getenv("OWASP_BM25_RATIO", "0.5"))
+    source_vec_margin: float = float(os.getenv("SOURCE_VEC_MARGIN", "0.05"))
+    max_extra_sources: int = int(os.getenv("MAX_EXTRA_SOURCES", "2"))
 
     data_dir: Path = Path(os.getenv("DATA_DIR", str(DATA_DIR)))
 

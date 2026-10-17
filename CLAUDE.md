@@ -4,7 +4,7 @@ Grounded cybersecurity Q&A copilot. It answers only from MITRE ATT&CK, OWASP Top
 
 ## Stack
 - Backend: Python 3.12, FastAPI, deployed to Render
-- Retrieval: ChromaDB (vectors) + rank_bm25 (keywords), fused with Reciprocal Rank Fusion (k = 60), plus an exact-ID boost
+- Retrieval: ChromaDB (vectors) + rank_bm25 (keywords), fused with Reciprocal Rank Fusion (k = 60), plus an exact-ID boost and one slot for an under-represented source whose best chunk is competitive (OWASP has 10 categories vs ~1,750 CVEs)
 - LLM: Claude API (Anthropic SDK). Answers: claude-sonnet-5-5 (claude-haiku-5-5 as the low-cost option). Guardrail classifier: claude-haiku-5-5. Model names live in config, not code.
 - Embeddings: voyage-4-nano, open-weight, run locally via sentence-transformers (trust_remote_code=True, truncate_dim=1024); use encode_document for chunks and encode_query for questions. Optional hosted fallback: Voyage API voyage-4-lite (VOYAGE_API_KEY). Anthropic has no embedding model.
 - The same embedding model must be used at index time and query time; store the model name and dimension in the index manifest and refuse to query a mismatched index.

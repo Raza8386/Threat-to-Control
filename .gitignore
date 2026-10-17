@@ -19,3 +19,6 @@ dist/
 .DS_Store
 .vscode/
 .idea/
+
+# Gate run outputs
+backend/scripts/phase2_report.json
