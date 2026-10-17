@@ -23,3 +23,4 @@ dist/
 # Gate run outputs
 backend/scripts/phase2_report.json
 backend/evals/answers_detail.json
+backend/evals/*.xlsx

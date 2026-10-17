@@ -63,6 +63,15 @@ Cost: Sonnet 5.5 is $2 / $10 per million input / output tokens; one answer with 
 
 ## Phase 3: guardrail, security and evals
 
+**One command for everything** (install, tests, refusal check, both models, Excel export; opens the workbook on Windows):
+
+```bash
+git pull
+python -m scripts.run_phase3
+```
+
+The pieces it runs, if you want them separately:
+
 ```bash
 pip install -r requirements.txt
 python -m pytest -q                                   # 66 unit + security tests, no API calls
