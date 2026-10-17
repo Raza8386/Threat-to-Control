@@ -50,6 +50,12 @@ Events in order: `guardrail` {verdict, reason} -> `sources` [{n, ref_id, title, 
 3. Guardrail + evals: golden set runs; targets met (hit@5 >= 90%, faithfulness >= 90%, attacks blocked 100%, false positives 0%).
 4. Launch: public URL live, rate limited, README and Architecture page done.
 
+## Security (see SECURITY.md)
+- Guardrail fails closed; never weaken it to fix a false positive without adding a golden-set case.
+- Sources and questions pass through `neutralize()`; streamed answers pass through `OutputGuard`.
+- Client-facing errors stay generic; never log question text, raw IPs or keys.
+- New dependency advisories: fix, or document why unreachable in SECURITY.md before suppressing in CI.
+
 ## Conventions
 - Secrets only in env vars (ANTHROPIC_API_KEY, optional VOYAGE_API_KEY); never commit .env or data/.
 - Type hints and small functions; pytest for retrieval and guardrail logic.

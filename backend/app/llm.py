@@ -31,6 +31,7 @@ class LLM(Protocol):
     model: str
 
     def stream(self, system: str, user: str, max_tokens: int = 1024) -> Iterator[str]: ...
+    def complete(self, system: str, user: str, max_tokens: int = 300) -> str: ...
     @property
     def usage(self) -> Usage: ...
 
@@ -42,8 +43,20 @@ class ClaudeLLM:
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise RuntimeError("ANTHROPIC_API_KEY is not set. Add it to backend/.env")
         self.model = model
-        self._client = anthropic.Anthropic()
+        # Bounded waits and retries: a hung upstream must not hold a request (or a worker) open.
+        self._client = anthropic.Anthropic(timeout=float(os.getenv("LLM_TIMEOUT_S", "45")), max_retries=2)
         self._usage = Usage()
+
+    def complete(self, system: str, user: str, max_tokens: int = 300) -> str:
+        """Single non-streaming call (guardrail classifier, eval judge). Updates usage."""
+        msg = self._client.messages.create(
+            model=self.model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{"role": "user", "content": user}],
+        )
+        self._usage = Usage(msg.usage.input_tokens, msg.usage.output_tokens)
+        return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
 
     def stream(self, system: str, user: str, max_tokens: int = 1024) -> Iterator[str]:
         self._usage = Usage()
@@ -69,6 +82,14 @@ class FakeLLM:
     def __init__(self, model: str = "fake"):
         self.model = model
         self._usage = Usage()
+
+    def complete(self, system: str, user: str, max_tokens: int = 300) -> str:
+        """Stand-in classifier/judge: flags obvious override wording, otherwise allows / supports."""
+        self._usage = Usage(len(user) // 4, 20)
+        if "classify" in system.lower():
+            bad = re.search(r"system prompt|instructions|rules|override|debug mode|above this line", user, re.I)
+            return '{"verdict": "%s", "reason": "stand-in"}' % ("block" if bad else "allow")
+        return '{"claims": [{"supported": true, "citation_correct": true}]}'
 
     def stream(self, system: str, user: str, max_tokens: int = 1024) -> Iterator[str]:
         sources = re.findall(r'<source n="(\d+)" id="([^"]+)"[^>]*>\n(.*?)\n</source>', user, re.S)
@@ -97,5 +118,5 @@ class FakeLLM:
 
 def get_llm(model: str) -> LLM:
     if os.getenv("LLM_BACKEND", "claude") == "fake":
-        return FakeLLM()
+        return FakeLLM(model="fake")
     return ClaudeLLM(model)

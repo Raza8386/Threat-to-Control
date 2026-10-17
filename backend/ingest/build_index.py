@@ -48,10 +48,11 @@ def build_bm25(chunks: list[dict]) -> None:
 
 def build_vectors(chunks: list[dict], embedder) -> None:
     import chromadb
+    from chromadb.config import Settings as ChromaSettings
 
     if settings.chroma_dir.exists():
         shutil.rmtree(settings.chroma_dir)
-    client = chromadb.PersistentClient(path=str(settings.chroma_dir))
+    client = chromadb.PersistentClient(path=str(settings.chroma_dir), settings=ChromaSettings(anonymized_telemetry=False))
     col = client.create_collection(COLLECTION, metadata={"hnsw:space": "cosine"})
 
     t0 = time.time()

@@ -91,7 +91,8 @@ def test_pipeline_reports_llm_errors(retriever):  # noqa: F811
             yield  # pragma: no cover
 
     events = list(answer_events("prevent SQL injection", retriever, Down()))
-    assert events[-1][0] == "error" and "network down" in events[-1][1]["message"]
+    # Clients get a generic message; the real cause stays in the server log.
+    assert events[-1][0] == "error" and "network down" not in events[-1][1]["message"]
 
 
 def test_cost_uses_model_prices():

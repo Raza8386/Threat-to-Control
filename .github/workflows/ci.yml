@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies (CPU-only torch)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+      - name: Unit and security tests
+        env:
+          EMBED_BACKEND: hash
+          LLM_BACKEND: fake
+        run: python -m pytest -q
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pip-audit
+      # Suppressed advisories affect Chroma's HTTP *server* mode only. This project uses the embedded
+      # PersistentClient and never runs or exposes a Chroma server (enforced by tests/test_security_config.py).
+      # Review each time chromadb is upgraded. See SECURITY.md.
+      - name: Audit Python dependencies
+        run: >
+          pip-audit -r backend/requirements.txt --progress-spinner off --desc
+          --ignore-vuln PYSEC-2026-311 --ignore-vuln PYSEC-2026-3813
+          --ignore-vuln PYSEC-2026-3814 --ignore-vuln PYSEC-2026-3815
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

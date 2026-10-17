@@ -61,6 +61,22 @@ Run without a key (offline stand-in model, for wiring checks only): `LLM_BACKEND
 
 Cost: Sonnet 5.5 is $2 / $10 per million input / output tokens; one answer with 6 sources is roughly 3K in + 400 out, about $0.01. Set `ANSWER_MODEL=claude-haiku-5-5` for about 1/20 of that.
 
+## Phase 3: guardrail, security and evals
+
+```bash
+pip install -r requirements.txt
+python -m pytest -q                                   # 66 unit + security tests, no API calls
+python -m evals.run_evals --retrieval-only            # free: hit@5 and MRR for hybrid / vector / bm25
+python -m evals.run_evals                             # full gate with the default answer model (~$0.70)
+python -m evals.run_evals --models claude-sonnet-5-5,claude-haiku-5-5   # adds a Haiku comparison (~$0.75)
+```
+
+The golden set (`evals/golden.yaml`, 60 cases) covers ATT&CK, OWASP, KEV, cross-source, off-topic, direct prompt injection and indirect (poisoned-source) injection. Results go to `evals/results.json`, which `GET /api/eval/results` serves to the Eval page; per-answer detail goes to `evals/answers_detail.json` (git-ignored).
+
+Gate targets: hybrid hit@5 ≥ 90%, faithfulness ≥ 90%, attacks blocked 100% with zero prompt leaks, indirect injection resisted 100%, off-topic refused 100%, false positives 0%.
+
+Security controls and the threat model are in [`SECURITY.md`](../SECURITY.md).
+
 ### Layout
 
 | Path | What it does |
@@ -68,7 +84,7 @@ Cost: Sonnet 5.5 is $2 / $10 per million input / output tokens; one answer with 
 | `ingest/attack.py` `owasp.py` `kev.py` | Download and chunk each source, one natural unit per chunk |
 | `ingest/build_index.py` | BM25 pickle + Chroma collection + `index_manifest.json` |
 | `app/retrieve.py` | `Retriever.search(query, mode="hybrid"|"vector"|"bm25")`, RRF k=60, exact-ID boost, one slot for a competitive under-represented source |
-| `app/guardrail.py` | Layer 1 regex heuristics + 1000-char limit (layer 2 LLM classifier: Phase 3) |
+| `app/guardrail.py` | Layer 1 regex heuristics; ambiguous cases to a Claude Haiku classifier (fail closed) |
 | `app/prompt.py` | System prompt; sources as numbered `<source>` blocks declared as data |
 | `app/llm.py` | Claude streaming client with token cost; `FakeLLM` for offline tests |
 | `app/pipeline.py` | One question → guardrail, sources, tokens, done; shared by API, gate and evals |
@@ -77,3 +93,5 @@ Cost: Sonnet 5.5 is $2 / $10 per million input / output tokens; one answer with 
 | `app/text.py` | Tokenizer and ID extraction (T-numbers, CVEs, OWASP A01 to A10) |
 | `scripts/phase1_check.py` | Phase 1 gate |
 | `scripts/phase2_check.py` | Phase 2 gate |
+| `app/security.py` | Rate limiter, daily spend cap, client IP, security headers |
+| `evals/golden.yaml` `evals/run_evals.py` | Golden set and the Phase 3 eval runner |

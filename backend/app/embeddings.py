@@ -9,10 +9,14 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import re
 from typing import Protocol
 
 from app.config import Settings, settings as default_settings
+
+
+REMOTE_CODE_ALLOWLIST = frozenset({"voyageai/voyage-4-nano"})
 
 
 class Embedder(Protocol):
@@ -29,7 +33,12 @@ class NanoEmbedder:
     def __init__(self, model: str, dim: int | None, max_tokens: int = 768, batch_size: int = 8):
         from sentence_transformers import SentenceTransformer  # heavy import, load lazily
 
-        kwargs = {"trust_remote_code": True}
+        # trust_remote_code executes Python from the model repo: allow it only for models that need it,
+        # and pin EMBED_MODEL_REVISION (a commit hash) in production so the code cannot change under you.
+        kwargs = {"trust_remote_code": model in REMOTE_CODE_ALLOWLIST}
+        revision = os.getenv("EMBED_MODEL_REVISION")
+        if revision:
+            kwargs["revision"] = revision
         if dim:
             kwargs["truncate_dim"] = dim
         self._model = SentenceTransformer(model, **kwargs)

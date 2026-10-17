@@ -58,6 +58,7 @@ class Retriever:
 
     def _load_vectors(self) -> None:
         import chromadb
+        from chromadb.config import Settings as ChromaSettings
 
         manifest = json.loads(self.cfg.manifest_path.read_text()) if self.cfg.manifest_path.exists() else {}
         if not manifest.get("embedder"):
@@ -73,7 +74,7 @@ class Retriever:
                 f"Index was built with {manifest['embedder']} but the query embedder is {self.embedder.name}. "
                 "Rebuild the index or fix EMBED_* settings."
             )
-        client = chromadb.PersistentClient(path=str(self.cfg.chroma_dir))
+        client = chromadb.PersistentClient(path=str(self.cfg.chroma_dir), settings=ChromaSettings(anonymized_telemetry=False))
         self.collection = client.get_collection("chunks")
 
     @property
