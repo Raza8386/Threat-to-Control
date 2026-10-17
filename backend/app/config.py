@@ -17,6 +17,8 @@ class Settings:
     embed_model: str = os.getenv("EMBED_MODEL", "voyageai/voyage-4-nano")
     embed_dim: int = int(os.getenv("EMBED_DIM", "1024"))
     voyage_api_model: str = os.getenv("VOYAGE_API_MODEL", "voyage-4-lite")
+    embed_max_tokens: int = int(os.getenv("EMBED_MAX_TOKENS", "768"))
+    embed_batch: int = int(os.getenv("EMBED_BATCH", "8"))
 
     # Claude models (used from Phase 2 on).
     answer_model: str = os.getenv("ANSWER_MODEL", "claude-sonnet-5-5")

@@ -19,7 +19,18 @@ python -m pytest -q            # unit tests
 
 Add `--force` to an ingest script to re-download its source (do this for KEV when CISA updates the catalog).
 
-Embedding ~2,500 chunks with voyage-4-nano takes roughly 10 to 30 minutes on a laptop CPU and a few minutes on a GPU. `python -m ingest.build_index --bm25-only` builds just the keyword index if you want to test without the model.
+Before the full build, check the speed: `python -m ingest.build_index --speed-test 32` embeds 32 chunks and projects the total time. Sequence length is capped at 768 tokens (`EMBED_MAX_TOKENS`), because uncapped voyage-4-nano runs crawl on CPU.
+
+If the projection is too long for your machine, pick one:
+
+| Option | Set in `.env` / shell | Speed on a laptop CPU | Cost |
+| --- | --- | --- | --- |
+| voyage-4-nano (default) | `EMBED_BACKEND=nano` | depends on the speed test | free |
+| Small local model | `EMBED_BACKEND=local` and `EMBED_MODEL=BAAI/bge-small-en-v1.5` | a few minutes | free |
+| Hosted Voyage API | `EMBED_BACKEND=voyage` and `VOYAGE_API_KEY=...` | about 1 minute | small (~600k tokens) |
+
+The query side must use the same model the index was built with; the retriever refuses a mismatch.
+`python -m ingest.build_index --bm25-only` builds just the keyword index if you want to test without any model.
 
 ### Layout
 

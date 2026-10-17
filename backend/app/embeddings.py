@@ -24,22 +24,30 @@ class Embedder(Protocol):
 
 
 class NanoEmbedder:
-    def __init__(self, model: str, dim: int, batch_size: int = 16):
+    """Local sentence-transformers model. Default voyage-4-nano; any ST model id works (e.g. BAAI/bge-small-en-v1.5)."""
+
+    def __init__(self, model: str, dim: int | None, max_tokens: int = 768, batch_size: int = 8):
         from sentence_transformers import SentenceTransformer  # heavy import, load lazily
 
-        self.name = f"{model}@{dim}"
-        self.dim = dim
+        kwargs = {"trust_remote_code": True}
+        if dim:
+            kwargs["truncate_dim"] = dim
+        self._model = SentenceTransformer(model, **kwargs)
+        # voyage-4-nano supports 32k tokens; left uncapped, CPU runs crawl. Our chunks are ~500 tokens.
+        self._model.max_seq_length = max_tokens
+        self.dim = dim or self._model.get_sentence_embedding_dimension()
+        self.name = f"{model}@{self.dim}"
         self.batch_size = batch_size
-        self._model = SentenceTransformer(model, trust_remote_code=True, truncate_dim=dim)
+        self._has_prompts = hasattr(self._model, "encode_document") and bool(getattr(self._model, "prompts", None))
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        vecs = self._model.encode_document(
-            texts, batch_size=self.batch_size, normalize_embeddings=True, show_progress_bar=True
-        )
+        encode = self._model.encode_document if self._has_prompts else self._model.encode
+        vecs = encode(texts, batch_size=self.batch_size, normalize_embeddings=True, show_progress_bar=True)
         return vecs.tolist()
 
     def embed_query(self, text: str) -> list[float]:
-        return self._model.encode_query(text, normalize_embeddings=True).tolist()
+        encode = self._model.encode_query if self._has_prompts else self._model.encode
+        return encode(text, normalize_embeddings=True).tolist()
 
 
 class VoyageAPIEmbedder:
@@ -91,10 +99,11 @@ class HashEmbedder:
 
 
 def get_embedder(cfg: Settings = default_settings) -> Embedder:
-    if cfg.embed_backend == "nano":
-        return NanoEmbedder(cfg.embed_model, cfg.embed_dim)
+    if cfg.embed_backend in ("nano", "local"):
+        dim = cfg.embed_dim if cfg.embed_backend == "nano" else None
+        return NanoEmbedder(cfg.embed_model, dim, max_tokens=cfg.embed_max_tokens, batch_size=cfg.embed_batch)
     if cfg.embed_backend == "voyage":
         return VoyageAPIEmbedder(cfg.voyage_api_model, cfg.embed_dim)
     if cfg.embed_backend == "hash":
         return HashEmbedder(cfg.embed_dim)
-    raise ValueError(f"Unknown EMBED_BACKEND={cfg.embed_backend!r} (use nano, voyage or hash)")
+    raise ValueError(f"Unknown EMBED_BACKEND={cfg.embed_backend!r} (use nano, local, voyage or hash)")
