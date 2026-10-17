@@ -37,7 +37,8 @@ frontend/
 - Raw downloads go to backend/data/raw/; ingest scripts write chunks to backend/data/chunks/<source>.jsonl.
 
 ## SSE contract
-Events in order: `guardrail` {verdict, reason} -> `sources` [{n, ref_id, title, url, source}] -> `token` {text}... -> `done` {latency_ms, tokens_in, tokens_out, cost_usd}. A blocked request sends `guardrail` (block) then `done`. Errors send `error` {message}.
+Events in order: `guardrail` {verdict, reason} -> `sources` [{n, ref_id, title, url, source}] -> `token` {text}... -> `done` {latency_ms, tokens_in, tokens_out, cost_usd, model, cited, fallback_from, refused?, withheld?}. A blocked request sends `guardrail` (block) then `done`. Errors send `error` {message}.
+`reset` {reason: "refusal" | "withheld"}: the client MUST discard all answer text shown so far. Sent when a safety classifier ends the stream with stop_reason "refusal" (an HTTP 200, not an exception) before retrying once on the fallback model, or when the output guard withholds an answer.
 
 ## Answer rules
 - Claims only from the numbered context; a [n] citation on every claim.
@@ -54,6 +55,7 @@ Events in order: `guardrail` {verdict, reason} -> `sources` [{n, ref_id, title, 
 - Guardrail fails closed; never weaken it to fix a false positive without adding a golden-set case.
 - Sources and questions pass through `neutralize()`; streamed answers pass through `OutputGuard`.
 - Client-facing errors stay generic; never log question text, raw IPs or keys.
+- Always check `stop_reason` after streaming: "refusal" means reset + fallback (Sonnet <-> Haiku), never a truncated answer.
 - New dependency advisories: fix, or document why unreachable in SECURITY.md before suppressing in CI.
 
 ## Conventions

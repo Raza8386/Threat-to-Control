@@ -104,17 +104,19 @@ def chat(req: ChatRequest, request: Request) -> StreamingResponse:
     try:
         llm = get_llm(settings.answer_model)
         classifier = get_llm(settings.guardrail_model)
+        fallback = get_llm(settings.fallback_for(settings.answer_model))
     except RuntimeError as exc:  # e.g. missing API key
         log.error("LLM not configured: %s", exc)
         budget.add(-reserve)
         raise HTTPException(503, "The answer service is not configured.")
 
     def stream():
-        for event, data in answer_events(req.question, retriever, llm, mode=req.mode, classifier_llm=classifier):
+        for event, data in answer_events(req.question, retriever, llm, mode=req.mode, classifier_llm=classifier, fallback_llm=fallback):
             if event == "done":
                 budget.add(data.get("cost_usd", 0.0) - reserve)
-                log.info("chat ip=%s mode=%s blocked=%s ms=%s cost=%.5f", ip_tag(ip), req.mode,
-                         data.get("blocked"), data.get("latency_ms"), data.get("cost_usd", 0.0))
+                log.info("chat ip=%s mode=%s blocked=%s refused=%s fallback=%s ms=%s cost=%.5f", ip_tag(ip), req.mode,
+                         data.get("blocked"), data.get("refused", False), bool(data.get("fallback_from")),
+                         data.get("latency_ms"), data.get("cost_usd", 0.0))
             yield _sse(event, data)
 
     return StreamingResponse(stream(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})

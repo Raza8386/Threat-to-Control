@@ -28,6 +28,13 @@ class Settings:
     # Claude models (used from Phase 2 on).
     answer_model: str = os.getenv("ANSWER_MODEL", "claude-sonnet-5-5")
     guardrail_model: str = os.getenv("GUARDRAIL_MODEL", "claude-haiku-5-5")
+    # Retried once when the answer model ends a stream with stop_reason "refusal". Empty = the other model of the pair.
+    fallback_model: str = os.getenv("FALLBACK_MODEL", "")
+
+    def fallback_for(self, model: str) -> str:
+        if self.fallback_model:
+            return self.fallback_model
+        return "claude-haiku-5-5" if model != "claude-haiku-5-5" else "claude-sonnet-5-5"
 
     # Retrieval.
     candidates: int = int(os.getenv("RETRIEVE_CANDIDATES", "20"))

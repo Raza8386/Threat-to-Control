@@ -21,6 +21,7 @@ Event = tuple[str, dict | list]
 MAX_ANSWER_TOKENS = 1024
 GENERIC_LLM_ERROR = "The answer service is temporarily unavailable. Please try again shortly."
 LEAK_MESSAGE = "The response was withheld by the output safety check."
+REFUSAL_MESSAGE = "This question couldn't be answered here. Try asking about detection or mitigation instead."
 
 
 def answer_events(
@@ -31,6 +32,7 @@ def answer_events(
     top_k: int | None = None,
     classifier_llm: LLM | None = None,
     extra_hits: list[Hit] | None = None,  # evals only: inject a poisoned source to test indirect injection
+    fallback_llm: LLM | None = None,  # retried once if `llm` ends with stop_reason "refusal"
 ) -> Iterator[Event]:
     t0 = time.perf_counter()
 
@@ -64,45 +66,79 @@ def answer_events(
     ]
     yield "sources", sources
 
-    out_guard = OutputGuard()
+    user_msg = build_user_message(question.strip(), hits)
+    attempt = _Attempt()
     try:
-        for text in llm.stream(system_prompt(), build_user_message(question.strip(), hits), max_tokens=MAX_ANSWER_TOKENS):
-            safe = out_guard.feed(text)
-            if out_guard.tripped:
-                break
-            if safe:
-                yield "token", {"text": safe}
-        tail = out_guard.flush()
-        if tail:
-            yield "token", {"text": tail}
+        yield from _stream_attempt(llm, user_msg, attempt)
+        refused_by = None
+        if attempt.refused and fallback_llm is not None:
+            # A safety classifier stopped the answer. The client must drop any partial text it has shown.
+            refused_by = llm.model
+            log.warning("refusal from %s (category=%s); retrying on %s", llm.model, attempt.category, fallback_llm.model)
+            yield "reset", {"reason": "refusal"}
+            first_cost = attempt.cost
+            attempt = _Attempt(prior_cost=first_cost)
+            llm = fallback_llm
+            yield from _stream_attempt(llm, user_msg, attempt)
     except Exception as exc:  # network, auth, rate limit
         log.error("LLM call failed: %s: %s", type(exc).__name__, exc)
         yield "error", {"message": GENERIC_LLM_ERROR}
         return
 
+    cost = round(attempt.cost + attempt.prior_cost + guard_cost, 6)
     usage = llm.usage
-    cost = round(usage.cost_usd(llm.model) + guard_cost, 6)
-    if out_guard.tripped:
-        log.warning("output guard tripped: possible system prompt leak (question len=%d)", len(question))
+    base = {"latency_ms": _ms(t0), "tokens_in": usage.input_tokens, "tokens_out": usage.output_tokens, "cost_usd": cost, "model": llm.model}
+    if attempt.guard.tripped:
+        log.warning("output guard tripped (%s): possible system prompt leak (question len=%d)", attempt.guard.reason, len(question))
+        yield "reset", {"reason": "withheld"}
         yield "error", {"message": LEAK_MESSAGE}
-        yield "done", {"latency_ms": _ms(t0), "tokens_in": usage.input_tokens, "tokens_out": usage.output_tokens,
-                       "cost_usd": cost, "blocked": True, "withheld": True}
+        yield "done", {**base, "blocked": True, "withheld": True}
+        return
+    if attempt.refused:
+        log.warning("refusal from %s (category=%s); no answer returned", llm.model, attempt.category)
+        yield "reset", {"reason": "refusal"}
+        yield "error", {"message": REFUSAL_MESSAGE}
+        yield "done", {**base, "blocked": True, "refused": True}
         return
 
-    answer = out_guard.text
+    answer = attempt.guard.text
     cited = extract_citations(answer)
     valid = [n for n in cited if 1 <= n <= len(sources)]
     yield "done", {
-        "latency_ms": _ms(t0),
-        "tokens_in": usage.input_tokens,
-        "tokens_out": usage.output_tokens,
-        "cost_usd": cost,
-        "model": llm.model,
+        **base,
         "mode": mode,
         "cited": valid,
         "invalid_citations": [n for n in cited if n not in valid],
         "blocked": False,
+        "fallback_from": refused_by,
+        "truncated": llm.stop_reason == "max_tokens",
     }
+
+
+class _Attempt:
+    def __init__(self, prior_cost: float = 0.0):
+        self.guard = OutputGuard()
+        self.refused = False
+        self.category: str | None = None
+        self.cost = 0.0
+        self.prior_cost = prior_cost
+
+
+def _stream_attempt(llm: LLM, user_msg: str, attempt: _Attempt) -> Iterator[Event]:
+    """Stream one model's answer through the output guard; record refusal and cost on `attempt`."""
+    for text in llm.stream(system_prompt(), user_msg, max_tokens=MAX_ANSWER_TOKENS):
+        safe = attempt.guard.feed(text)
+        if attempt.guard.tripped:
+            break
+        if safe:
+            yield "token", {"text": safe}
+    attempt.refused = getattr(llm, "stop_reason", None) == "refusal"
+    attempt.category = getattr(llm, "stop_category", None)
+    attempt.cost = llm.usage.cost_usd(llm.model)
+    if not attempt.refused and not attempt.guard.tripped:
+        tail = attempt.guard.flush()
+        if tail:
+            yield "token", {"text": tail}
 
 
 def _ms(t0: float) -> int:

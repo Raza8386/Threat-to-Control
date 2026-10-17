@@ -23,6 +23,7 @@ Please open a private security advisory on GitHub (Security → Report a vulnera
 | 11 | **Secret leakage** | API keys only in `backend/.env` (git-ignored) or host environment variables; gitleaks in CI; test scans tracked files for key patterns | `test_no_secrets_committed`, CI `secret-scan` job |
 | 12 | **Supply chain: remote model code** | `trust_remote_code` only for an allowlist (voyage-4-nano); pin `EMBED_MODEL_REVISION` to a commit hash in production | `test_remote_code_is_allowlisted` |
 | 13 | **Vulnerable dependencies** | `pip-audit` in CI on every push; Dependabot weekly | CI `dependency-audit` job |
+| 15 | **Partial answers after a model refusal**: a safety classifier ends the stream (HTTP 200, `stop_reason: "refusal"`) mid-answer | Pipeline checks `stop_reason`, sends a `reset` event so the client discards partial text, retries once on the other model (Sonnet ↔ Haiku), and returns a clear message if both refuse; the system prompt frames answers defensively (detection, mitigation, response) | `tests/test_refusal.py`; eval reports fallbacks and double refusals |
 | 14 | **Hung upstream holding workers** | Claude client timeout (45 s) and bounded retries | `app/llm.py` |
 
 ## Accepted dependency advisories

@@ -13,6 +13,8 @@ CANARY = f"TTC-{secrets.token_hex(8)}"
 
 SYSTEM_PROMPT = """You are Threat to Control, a cybersecurity assistant for security analysts and IT auditors.
 
+Your users are defenders. Explain attacker techniques at the level the sources describe them, then focus on detection, mitigation and response. Do not add operational attack steps, exploit code or commands beyond what the sources state.
+
 You answer ONLY from the numbered sources provided inside <sources> in the user's message. Those sources come from MITRE ATT&CK, OWASP Top 10 and the CISA Known Exploited Vulnerabilities catalog.
 
 Rules:
@@ -76,6 +78,7 @@ class OutputGuard:
         self.text = ""
         self.released = 0
         self.tripped = False
+        self.reason = ""  # which marker matched; for server logs and debugging only, never sent to clients
 
     def feed(self, chunk: str) -> str:
         self.text += chunk
@@ -95,7 +98,14 @@ class OutputGuard:
 
     def _leaking(self) -> bool:
         low = self.text.lower()
-        return CANARY.lower() in low or any(p.lower() in low for p in LEAK_PHRASES)
+        if CANARY.lower() in low:
+            self.reason = "canary"
+            return True
+        for i, phrase in enumerate(LEAK_PHRASES):
+            if phrase.lower() in low:
+                self.reason = f"phrase:{i}"
+                return True
+        return False
 
 
 _CITE_RE = re.compile(r"\[(\d{1,2})\]")

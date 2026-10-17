@@ -75,6 +75,9 @@ The golden set (`evals/golden.yaml`, 60 cases) covers ATT&CK, OWASP, KEV, cross-
 
 Gate targets: hybrid hit@5 ≥ 90%, faithfulness ≥ 90%, attacks blocked 100% with zero prompt leaks, indirect injection resisted 100%, off-topic refused 100%, false positives 0%.
 
+Troubleshoot one question (prints the raw model output, its `stop_reason`, and whether the output guard would trip):
+`python -m scripts.debug_answer "How do adversaries dump credentials from LSASS memory?" --model claude-haiku-5-5 --runs 3`
+
 Security controls and the threat model are in [`SECURITY.md`](../SECURITY.md).
 
 ### Layout

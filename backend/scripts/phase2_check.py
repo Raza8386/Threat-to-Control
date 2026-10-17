@@ -68,13 +68,15 @@ def link_ok(url: str) -> bool:
 
 def run_one(question: str, retriever: Retriever, llm) -> dict:
     out = {"question": question, "answer": "", "sources": [], "done": {}, "error": None, "guardrail": None}
-    for event, data in answer_events(question, retriever, llm):
+    for event, data in answer_events(question, retriever, llm, fallback_llm=get_llm(settings.fallback_for(llm.model))):
         if event == "guardrail":
             out["guardrail"] = data
         elif event == "sources":
             out["sources"] = data
         elif event == "token":
             out["answer"] += data["text"]
+        elif event == "reset":
+            out["answer"] = ""
         elif event == "done":
             out["done"] = data
         elif event == "error":

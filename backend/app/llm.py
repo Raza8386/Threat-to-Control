@@ -29,6 +29,7 @@ class Usage:
 
 class LLM(Protocol):
     model: str
+    stop_reason: str | None
 
     def stream(self, system: str, user: str, max_tokens: int = 1024) -> Iterator[str]: ...
     def complete(self, system: str, user: str, max_tokens: int = 300) -> str: ...
@@ -46,6 +47,8 @@ class ClaudeLLM:
         # Bounded waits and retries: a hung upstream must not hold a request (or a worker) open.
         self._client = anthropic.Anthropic(timeout=float(os.getenv("LLM_TIMEOUT_S", "45")), max_retries=2)
         self._usage = Usage()
+        self.stop_reason: str | None = None
+        self.stop_category: str | None = None
 
     def complete(self, system: str, user: str, max_tokens: int = 300) -> str:
         """Single non-streaming call (guardrail classifier, eval judge). Updates usage."""
@@ -59,16 +62,28 @@ class ClaudeLLM:
         return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
 
     def stream(self, system: str, user: str, max_tokens: int = 1024) -> Iterator[str]:
+        """Yield text deltas. After the stream ends, stop_reason is set ("end_turn", "max_tokens", "refusal", ...).
+
+        A safety classifier can end a stream with stop_reason "refusal" (an HTTP 200, not an exception),
+        possibly after some text was already yielded. Callers must check stop_reason.
+        """
         self._usage = Usage()
+        self.stop_reason, self.stop_category = None, None
         with self._client.messages.stream(
             model=self.model,
             max_tokens=max_tokens,
             system=system,
             messages=[{"role": "user", "content": user}],
         ) as s:
-            for text in s.text_stream:
-                yield text
+            for event in s:
+                if event.type == "content_block_delta" and getattr(event.delta, "type", "") == "text_delta":
+                    yield event.delta.text
+                elif event.type == "message_delta" and getattr(event.delta, "stop_reason", None):
+                    self.stop_reason = event.delta.stop_reason
+                    details = getattr(event.delta, "stop_details", None)
+                    self.stop_category = getattr(details, "category", None) if details else None
             final = s.get_final_message()
+        self.stop_reason = self.stop_reason or final.stop_reason
         self._usage = Usage(final.usage.input_tokens, final.usage.output_tokens)
 
     @property
@@ -82,6 +97,8 @@ class FakeLLM:
     def __init__(self, model: str = "fake"):
         self.model = model
         self._usage = Usage()
+        self.stop_reason: str | None = "end_turn"
+        self.stop_category: str | None = None
 
     def complete(self, system: str, user: str, max_tokens: int = 300) -> str:
         """Stand-in classifier/judge: flags obvious override wording, otherwise allows / supports."""
