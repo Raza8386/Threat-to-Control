@@ -86,6 +86,9 @@ def main() -> None:
 
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     chunks = load_chunks()
+    # Remove the old manifest first, so an interrupted build can never look complete.
+    if not args.speed_test and settings.manifest_path.exists():
+        settings.manifest_path.unlink()
     if args.speed_test:
         from app.embeddings import get_embedder
 

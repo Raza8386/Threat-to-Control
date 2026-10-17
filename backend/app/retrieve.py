@@ -56,6 +56,10 @@ class Retriever:
         import chromadb
 
         manifest = json.loads(self.cfg.manifest_path.read_text()) if self.cfg.manifest_path.exists() else {}
+        if not manifest.get("embedder"):
+            # A chroma/ folder without a manifest is a build that never finished (e.g. interrupted).
+            print("WARNING: vector index is incomplete (no manifest); using BM25 only. Run: python -m ingest.build_index")
+            return
         if self.embedder is None:
             from app.embeddings import get_embedder
 
