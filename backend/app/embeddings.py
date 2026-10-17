@@ -34,7 +34,9 @@ class NanoEmbedder:
             kwargs["truncate_dim"] = dim
         self._model = SentenceTransformer(model, **kwargs)
         # voyage-4-nano supports 32k tokens; left uncapped, CPU runs crawl. Our chunks are ~500 tokens.
-        self._model.max_seq_length = max_tokens
+        # Never exceed the model's own limit (BERT-style models such as bge-small stop at 512).
+        native = self._model.max_seq_length or max_tokens
+        self._model.max_seq_length = min(max_tokens, native)
         self.dim = dim or self._model.get_sentence_embedding_dimension()
         self.name = f"{model}@{self.dim}"
         self.batch_size = batch_size
