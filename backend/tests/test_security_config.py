@@ -40,3 +40,9 @@ def test_no_secrets_committed():
 def test_env_files_ignored():
     ignore = (BACKEND.parent / ".gitignore").read_text(encoding="utf-8")
     assert ".env" in ignore and "data/" in ignore
+
+
+def test_allowed_origins_tolerate_trailing_slash_quotes_and_spaces():
+    from app.main import parse_origins
+
+    assert parse_origins(' "https://a.vercel.app/" , https://b.example.com/,, ') == ["https://a.vercel.app", "https://b.example.com"]

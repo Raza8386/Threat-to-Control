@@ -31,6 +31,15 @@ TRUST_PROXY = os.getenv("TRUST_PROXY", "0") == "1"
 STATE: dict = {}
 
 
+def parse_origins(raw: str) -> list[str]:
+    """Comma-separated origins, forgiving of spaces, quotes and a trailing slash (browsers send none)."""
+    return [o.strip().strip("'\"").rstrip("/") for o in raw.split(",") if o.strip().strip("'\"")]
+
+
+ALLOWED_ORIGINS = parse_origins(os.getenv("ALLOWED_ORIGINS", "http://localhost:5173"))
+log.info("CORS allowed origins: %s", ", ".join(ALLOWED_ORIGINS))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     STATE["retriever"] = Retriever()  # loads BM25 + vectors once
@@ -52,7 +61,7 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",") if o.strip()],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
     allow_credentials=False,
