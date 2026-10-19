@@ -236,7 +236,7 @@ The full threat model is in `SECURITY.md` (15 threats, each with its control and
 | 1. Data and store | Ingest, chunk, index, exact-ID retrieval | Passed |
 | 2. RAG core | Streaming answers with citations that resolve | Passed (10/10) |
 | 3. Guardrail and evals | Golden set gate | Code complete; re-run needed after credit top-up |
-| 4. Launch | Render and Vercel, rate limited, README, How it works page | Frontend done; deployment pending |
+| 4. Launch | Render (API, BM25 search, Haiku answers) and Vercel (website), rate limited; see DEPLOY.md | Deployment config ready; Phase 3 eval re-run still to do |
 | 5. Threat → Control | Map retrieved threats to NCA ECC-2:2024 controls through MITRE mitigations and a curated crosswalk | Done. Next: SAMA CSF, and generating the catalogue from the KSA GRC Assurance Pack |
 | 6. Audit-finding mode | Draft findings in IIA format (condition, criteria, cause, effect, recommendation), every element cited, released only after human approval | Planned |
 | 7. Governance hardening | AI system card page, feedback button, production monitoring, incident runbook | Planned |

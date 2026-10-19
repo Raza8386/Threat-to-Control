@@ -1,0 +1,37 @@
+# Render Blueprint: New > Blueprint > pick this repo. Secrets marked sync:false are entered in the dashboard.
+services:
+  - type: web
+    name: threat-to-control-api
+    runtime: python
+    rootDir: backend
+    plan: free   # sleeps after ~15 min idle; "starter" keeps it awake
+    buildCommand: >-
+      pip install -r requirements-deploy.txt &&
+      python -m ingest.attack && python -m ingest.owasp && python -m ingest.kev &&
+      python -m ingest.build_index --bm25-only
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: APP_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: ANSWER_MODEL
+        value: claude-haiku-5-5
+      - key: GUARDRAIL_MODEL
+        value: claude-haiku-5-5
+      - key: RATE_LIMIT_PER_MIN
+        value: "8"
+      - key: RATE_LIMIT_PER_DAY
+        value: "60"
+      - key: DAILY_COST_CAP_USD
+        value: "2.00"
+      - key: LOG_LEVEL
+        value: INFO
