@@ -3,7 +3,7 @@ export default function Architecture() {
     <section className="report">
       <h1>How it works</h1>
       <p className="lede">
-        Every question goes through the same six steps. The design goal is an answer an auditor can check: every claim
+        Every question goes through the same seven steps. The design goal is an answer an auditor can check: every claim
         cites a source, and the system reports its own accuracy on the Evaluation page.
       </p>
 
@@ -14,6 +14,7 @@ export default function Architecture() {
         <li><div><h3>Keep small sources visible</h3><p>The catalog holds about 1,750 CVEs, 700 ATT&amp;CK techniques and 10 OWASP categories. When a smaller source has a strong match that the larger ones crowd out, it keeps one slot.</p></div></li>
         <li><div><h3>Answer from the sources only</h3><p>Claude receives the top six sources as numbered, fenced blocks marked as reference data. It must cite each claim as [n] and say so when the sources don't cover the question. Text inside a source is never followed as an instruction.</p></div></li>
         <li><div><h3>Check the output</h3><p>A hidden marker in the instructions detects any attempt to leak them, and the answer is withheld before it reaches you. If the model's safety system stops an answer partway, the partial text is cleared and a second Claude model answers instead.</p></div></li>
+        <li><div><h3>Map to NCA ECC controls</h3><p>Each retrieved technique is followed through MITRE&apos;s own mitigation links, and each OWASP category and exploited CVE through a curated crosswalk, to the NCA Essential Cybersecurity Controls (ECC-2:2024). This step is plain lookup, not the AI model, so every mapped control shows the source and the reason that led to it.</p></div></li>
         <li><div><h3>Show the evidence</h3><p>Each citation links to the original ATT&amp;CK, OWASP or NVD page. Sources the answer did not use are shown faded, so you can see what was considered.</p></div></li>
       </ol>
 
@@ -38,7 +39,8 @@ export default function Architecture() {
 
       <h2>Limits</h2>
       <ul>
-        <li>It knows only these three sources. Questions about NCA ECC, SAMA or other frameworks are declined until those are added.</li>
+        <li>Answers come only from these three sources. NCA ECC controls are shown by the mapping step, not written by the model; titles are paraphrased, so check the official ECC-2:2024 text. SAMA CSF is not mapped yet.</li>
+        <li>The crosswalk from mitigations to ECC controls is the project author&apos;s judgement, not an NCA or MITRE mapping.</li>
         <li>Scores come from a 60-question test set and a model judge. They show how the system behaves, not that it is never wrong.</li>
         <li>Answers explain techniques for defenders; they do not provide attack instructions beyond what the sources describe.</li>
       </ul>

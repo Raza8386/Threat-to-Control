@@ -18,6 +18,8 @@ backend/
   app/guardrail.py     # regex score -> LLM classifier only when ambiguous
   app/retrieve.py      # vector + BM25 + RRF + exact-ID boost; mode = hybrid|vector|bm25
   app/prompt.py        # numbered, delimited context; context is data, never instructions
+  app/controls.py      # deterministic threat -> NCA ECC-2:2024 mapping (no model call)
+  app/ecc/             # ecc_2024.yaml (catalogue, paraphrased) + crosswalk.yaml (curated, with rationale)
   app/config.py        # env vars, model names, top_k, thresholds
   ingest/attack.py owasp.py kev.py build_index.py
   evals/golden.yaml run_evals.py results.json
@@ -26,7 +28,8 @@ frontend/
   src/pages/Chat.tsx Eval.tsx Architecture.tsx
   src/components/Answer.tsx       # safe markdown; only [n] citations become links
   src/components/EvidenceRail.tsx # sources as colour-coded exhibits (ATT&CK oxblood, OWASP forest, KEV amber)
-  src/lib/sse.ts       # parses guardrail, sources, token, reset, error, done events
+  src/components/ControlMap.tsx   # mapped NCA ECC controls with the source trail for each
+  src/lib/sse.ts       # parses guardrail, sources, controls, token, reset, error, done events
 ```
 
 ## Data rules
@@ -39,8 +42,13 @@ frontend/
 - Raw downloads go to backend/data/raw/; ingest scripts write chunks to backend/data/chunks/<source>.jsonl.
 
 ## SSE contract
-Events in order: `guardrail` {verdict, reason} -> `sources` [{n, ref_id, title, url, source}] -> `token` {text}... -> `done` {latency_ms, tokens_in, tokens_out, cost_usd, model, cited, fallback_from, refused?, withheld?}. A blocked request sends `guardrail` (block) then `done`. Errors send `error` {message}.
+Events in order: `guardrail` {verdict, reason} -> `sources` [{n, ref_id, title, url, source}] -> `controls` {framework, framework_url, note, controls: [{ecc_id, title, subdomain_id, subdomain, domain, primary, basis: [{n, ref_id, via, rationale}]}]} -> `token` {text}... -> `done` {latency_ms, tokens_in, tokens_out, cost_usd, model, cited, fallback_from, refused?, withheld?}. A blocked request sends `guardrail` (block) then `done`. Errors send `error` {message}.
 `reset` {reason: "refusal" | "withheld"}: the client MUST discard all answer text shown so far. Sent when a safety classifier ends the stream with stop_reason "refusal" (an HTTP 200, not an exception) before retrying once on the fallback model, or when the output guard withholds an answer.
+
+## Control mapping rules
+- Technique -> MITRE mitigations (official relationships) -> ECC via crosswalk.yaml; OWASP and KEV via crosswalk.yaml. Technique-level entries are added (weighted higher) where ECC has a control written for that threat, e.g. phishing -> email protection.
+- The model never states ECC/SAMA control numbers (prompt rule 8); only the mapping step does, with its trail.
+- Paraphrase ECC titles, never copy official text; every crosswalk target must exist in ecc_2024.yaml (tests enforce it).
 
 ## Answer rules
 - Claims only from the numbered context; a [n] citation on every claim.

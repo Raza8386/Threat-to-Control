@@ -219,3 +219,22 @@ td.num, th.num { text-align: right; }
 .intro.compact h1 { font-size: 20px; }
 .intro.compact .intro-text { display: none; }
 td.nowrap, .report td:first-child { white-space: nowrap; }
+
+/* ---------- NCA ECC control map (below the answer, like a schedule in a working paper) ---------- */
+.controls { margin-top: var(--s4); padding-top: var(--s2); border-top: 2px solid var(--ink); font-family: var(--ui); }
+.controls h2 { font-size: 17px; margin: 0 0 var(--s-1); }
+.controls-lede { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 var(--s2); max-width: 70ch; }
+.ctl-list { list-style: none; margin: 0; padding: 0; }
+.ctl { display: grid; grid-template-columns: 92px 1fr; gap: var(--s1); padding: var(--s1) 0; border-top: 1px solid var(--rule-soft); }
+.ctl:first-child { border-top: 0; }
+.ctl-id { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink); padding-top: 1px; }
+.ctl-title { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.ctl-path { margin: 2px 0 6px; font-size: 12.5px; color: var(--ink-soft); }
+.ctl-why { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--ink-soft); }
+.ctl-why li { display: inline-flex; align-items: baseline; gap: 3px; }
+.ctl-why button.cite { border: 0; border-left: 3px solid; font: inherit; font-size: 11.5px; font-weight: 700; line-height: 1; padding: 3px 5px; border-radius: 3px; cursor: pointer; }
+.ctl-why button.cite:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.small-btn { margin-top: var(--s1); font-size: 13.5px; padding: 6px 12px; }
+@media (max-width: 560px) {
+  .ctl { grid-template-columns: 1fr; gap: 2px; }
+}

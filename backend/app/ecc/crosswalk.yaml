@@ -1,0 +1,278 @@
+# Threat -> NCA ECC-2:2024 crosswalk (curated; author: Threat to Control project).
+#
+# How a retrieved source reaches a control:
+#   ATT&CK technique --(MITRE "mitigates" relationships, official)--> ATT&CK mitigation M10xx
+#                    --(this file, curated)----------------------------> ECC-2:2024 control
+#   OWASP category   --(this file, curated)----------------------------> ECC-2:2024 control
+#   KEV CVE          --(this file, curated)----------------------------> ECC-2:2024 control
+#
+# Each entry lists targets in priority order; the first is the primary control.
+# Targets may be a subcontrol (2-2-3-2) or a subdomain (2-3) where ECC-2:2024 has no single
+# subcontrol for the measure. Every target must exist in ecc_2024.yaml (enforced by tests).
+# Review status: curated by the project author; not endorsed by NCA or MITRE.
+
+version: 1
+
+# Technique-level additions, applied before the mitigation route. A sub-technique inherits its
+# parent's entry (T1566.001 -> T1566). Used where ECC has a control written for that threat that the
+# generic MITRE mitigation does not reach (e.g. phishing -> email protection).
+attack_techniques:
+  T1566:
+    ecc: [2-4-3-1, 2-4-3-4, 2-4-3-5, 1-10-3-1]
+    rationale: ECC email protection is written for phishing - filtering, APT protection, SPF/DKIM/DMARC - plus awareness.
+  T1190:
+    ecc: [2-15-3-1, 2-10-3-3, 2-11-3-2]
+    rationale: Internet-facing applications need a WAF, prompt remediation and penetration testing.
+  T1133:
+    ecc: [2-2-3-2, 2-12-3-2]
+    rationale: Remote access requires MFA and logging of remote sessions.
+  T1078:
+    ecc: [2-2-3-5, 2-2-3-2, 2-12-3-2]
+    rationale: Abuse of valid accounts is countered by access reviews, MFA and monitoring of privileged and remote use.
+  T1110:
+    ecc: [2-2-3-2, 2-2-3-1]
+    rationale: MFA and password and lockout rules defeat password guessing and spraying.
+  T1021.001:
+    ecc: [2-2-3-2, 2-5-3-5]
+    rationale: RDP needs MFA and restriction of the service on the network.
+  T1486:
+    ecc: [2-9-3-2, 2-9-3-3, 3-1]
+    rationale: Ransomware resilience depends on tested, recoverable backups and continuity plans.
+  T1485:
+    ecc: [2-9-3-2, 3-1]
+    rationale: Recovery from destroyed data relies on backups and continuity.
+  T1490:
+    ecc: [2-9-3-1, 2-9-3-3]
+    rationale: Backups must be protected and tested so recovery cannot be inhibited.
+  T1071.004:
+    ecc: [2-5-3-7]
+    rationale: DNS used as a command channel is addressed by DNS security.
+  T1498:
+    ecc: [2-5-3-9]
+    rationale: Network denial of service maps to DDoS protection.
+  T1499:
+    ecc: [2-5-3-9, 3-1]
+    rationale: Endpoint denial of service maps to DDoS protection and continuity.
+  T1189:
+    ecc: [2-5-3-3, 2-5-3-8]
+    rationale: Drive-by compromise is addressed by secure browsing and browsing-channel protection.
+  T1195:
+    ecc: [4-1-3-1, 1-6]
+    rationale: Supply chain compromise calls for third-party risk assessment and secure project delivery.
+  T1199:
+    ecc: [4-1-3-1, 2-2-3-3]
+    rationale: Trusted relationships need third-party risk assessment and least-privilege access.
+  T1530:
+    ecc: [4-2-3-2, 2-8-3-3]
+    rationale: Cloud storage data needs tenant isolation and encryption.
+
+attack_mitigations:
+  M1013:
+    name: Application Developer Guidance
+    ecc: [1-6, 2-15]
+    rationale: Secure development guidance belongs in IT project management and web application security.
+  M1015:
+    name: Active Directory Configuration
+    ecc: [2-2-3-3, 2-2-3-4]
+    rationale: Directory configuration enforces least privilege and protects privileged groups.
+  M1016:
+    name: Vulnerability Scanning
+    ecc: [2-10-3-1, 2-11-3-2]
+    rationale: Scanning is the vulnerability assessment activity; testing confirms exploitability.
+  M1017:
+    name: User Training
+    ecc: [1-10-3-1, 1-10-3-3]
+    rationale: Training users to recognise phishing and unsafe browsing is the awareness programme.
+  M1018:
+    name: User Account Management
+    ecc: [2-2-3-3, 2-2-3-5]
+    rationale: Granting and reviewing account permissions is access authorisation and periodic review.
+  M1019:
+    name: Threat Intelligence Program
+    ecc: [2-13-3-5, 2-10-3-5]
+    rationale: Threat intelligence handling and trusted vulnerability feeds.
+  M1020:
+    name: SSL/TLS Inspection
+    ecc: [2-5-3-8, 2-5-3-3]
+    rationale: Inspecting encrypted traffic protects the browsing channel.
+  M1021:
+    name: Restrict Web-Based Content
+    ecc: [2-5-3-3, 2-5-3-8]
+    rationale: Blocking risky sites and content is secure browsing.
+  M1022:
+    name: Restrict File and Directory Permissions
+    ecc: [2-2-3-3, 2-7]
+    rationale: File permissions apply least privilege and protect data.
+  M1024:
+    name: Restrict Registry Permissions
+    ecc: [2-2-3-3, 2-3]
+    rationale: Registry ACLs apply least privilege to system configuration.
+  M1025:
+    name: Privileged Process Integrity
+    ecc: [2-3, 2-2-3-4]
+    rationale: Protecting privileged processes hardens systems and privileged access.
+  M1026:
+    name: Privileged Account Management
+    ecc: [2-2-3-4, 2-2-3-2, 2-12-3-2]
+    rationale: Direct match to privileged access management, privileged MFA and privileged activity logging.
+  M1027:
+    name: Password Policies
+    ecc: [2-2-3-1]
+    rationale: Password rules are part of identity-based user authentication.
+  M1028:
+    name: Operating System Configuration
+    ecc: [2-3, 1-6]
+    rationale: Secure OS configuration and hardening protect systems and are set before go-live.
+  M1029:
+    name: Remote Data Storage
+    ecc: [2-12-3-5, 2-9-3-1]
+    rationale: Keeping logs and data off the host protects retention and backup.
+  M1030:
+    name: Network Segmentation
+    ecc: [2-5-3-1, 2-5-3-2]
+    rationale: Direct match to network segmentation and environment isolation.
+  M1031:
+    name: Network Intrusion Prevention
+    ecc: [2-5-3-6]
+    rationale: Direct match to intrusion prevention systems.
+  M1032:
+    name: Multi-factor Authentication
+    ecc: [2-2-3-2, 2-4-3-2, 2-15-3-5]
+    rationale: Direct match to MFA for remote, privileged, email and web application access.
+  M1033:
+    name: Limit Software Installation
+    ecc: [2-3, 2-1]
+    rationale: Controlling installed software protects systems and keeps the asset inventory accurate.
+  M1034:
+    name: Limit Hardware Installation
+    ecc: [2-3-3-2]
+    rationale: Restricting external devices and media.
+  M1035:
+    name: Limit Access to Resource Over Network
+    ecc: [2-5-3-5, 2-2-3-3]
+    rationale: Restrict network services and apply least privilege to remote resources.
+  M1036:
+    name: Account Use Policies
+    ecc: [2-2-3-1, 2-2-3-3]
+    rationale: Lockout and login rules support authentication and authorisation.
+  M1037:
+    name: Filter Network Traffic
+    ecc: [2-5-3-5, 2-5-3-1]
+    rationale: Filtering ports and protocols at firewalls.
+  M1038:
+    name: Execution Prevention
+    ecc: [2-3-3-1, 2-3]
+    rationale: Application control on endpoints and servers.
+  M1039:
+    name: Environment Variable Permissions
+    ecc: [2-3]
+    rationale: System hardening.
+  M1040:
+    name: Behavior Prevention on Endpoint
+    ecc: [2-3-3-1]
+    rationale: Advanced endpoint protection (EDR behaviour blocking).
+  M1041:
+    name: Encrypt Sensitive Information
+    ecc: [2-8-3-3, 2-7]
+    rationale: Direct match to encryption in transit and at rest.
+  M1042:
+    name: Disable or Remove Feature or Program
+    ecc: [2-3, 2-5-3-5]
+    rationale: Reducing attack surface on systems and network services.
+  M1043:
+    name: Credential Access Protection
+    ecc: [2-2-3-4, 2-3]
+    rationale: Protecting credential stores supports privileged access management and system protection.
+  M1044:
+    name: Restrict Library Loading
+    ecc: [2-3]
+    rationale: System hardening.
+  M1045:
+    name: Code Signing
+    ecc: [2-3, 2-8-3-1]
+    rationale: Enforcing signed code protects systems using approved cryptography.
+  M1046:
+    name: Boot Integrity
+    ecc: [2-3]
+    rationale: System integrity protection.
+  M1047:
+    name: Audit
+    ecc: [2-12-3-1, 2-12-3-4, 1-8]
+    rationale: Logging, monitoring and periodic review of configurations and activity.
+  M1048:
+    name: Application Isolation and Sandboxing
+    ecc: [2-3-3-1, 2-5-3-8]
+    rationale: Sandboxing limits malware and protects the browsing channel.
+  M1049:
+    name: Antivirus/Antimalware
+    ecc: [2-3-3-1]
+    rationale: Direct match to malware protection.
+  M1050:
+    name: Exploit Protection
+    ecc: [2-3-3-1]
+    rationale: Advanced endpoint protection against exploitation.
+  M1051:
+    name: Update Software
+    ecc: [2-3-3-3, 2-10-3-3]
+    rationale: Direct match to patch management and vulnerability remediation.
+  M1052:
+    name: User Account Control
+    ecc: [2-2-3-4]
+    rationale: Controlling privilege elevation.
+  M1053:
+    name: Data Backup
+    ecc: [2-9-3-1, 2-9-3-2, 3-1]
+    rationale: Direct match to backup scope and recovery, and to continuity.
+  M1054:
+    name: Software Configuration
+    ecc: [2-3, 1-6]
+    rationale: Secure application configuration and hardening before go-live.
+  M1056:
+    name: Pre-compromise
+    ecc: [2-13-3-5]
+    rationale: Activity before compromise is largely outside the entity's control; threat intelligence gives early warning.
+  M1057:
+    name: Data Loss Prevention
+    ecc: [2-7]
+    rationale: DLP protects data and information.
+  M1060:
+    name: Out-of-Band Communications Channel
+    ecc: [2-13-3-1, 3-1]
+    rationale: Alternative channels support incident response and continuity.
+  # M1055 "Do Not Mitigate" is intentionally unmapped: MITRE states the technique should not be mitigated.
+
+owasp:
+  A01:
+    ecc: [2-15-3-5, 2-2-3-3]
+    rationale: Web application authorisation and least privilege.
+  A02:
+    ecc: [2-8-3-3, 2-15-3-3, 2-8-3-2]
+    rationale: Encryption of data in transit and at rest, HTTPS and key management.
+  A03:
+    ecc: [2-15-3-1, 1-6]
+    rationale: WAF and secure coding in project delivery.
+  A04:
+    ecc: [2-15-3-2, 1-6]
+    rationale: Secure multi-tier architecture designed in at project stage.
+  A05:
+    ecc: [1-6, 2-3, 2-15]
+    rationale: Secure configuration and hardening of systems and web applications.
+  A06:
+    ecc: [2-10-3-1, 2-10-3-3, 2-3-3-3]
+    rationale: Identifying and patching vulnerable components.
+  A07:
+    ecc: [2-15-3-5, 2-2-3-2, 2-2-3-1]
+    rationale: Authentication strength for web applications and users.
+  A08:
+    ecc: [1-6, 2-8-3-1]
+    rationale: Integrity of code and pipelines, and approved cryptographic signing.
+  A09:
+    ecc: [2-12-3-1, 2-12-3-4, 2-13-3-1]
+    rationale: Logging, monitoring and incident response.
+  A10:
+    ecc: [2-15-3-1, 2-5-3-5, 2-5-3-1]
+    rationale: WAF and restricting outbound network access from application servers.
+
+kev:
+  ecc: [2-10-3-3, 2-3-3-3, 2-10-3-2, 2-10-3-5]
+  rationale: A known exploited vulnerability calls for risk-based remediation, patching, severity classification and trusted vulnerability feeds.

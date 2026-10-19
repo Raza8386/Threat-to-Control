@@ -1,4 +1,4 @@
-"""One question -> a sequence of SSE events: guardrail, sources, token..., done (or error).
+"""One question -> a sequence of SSE events: guardrail, sources, controls, token..., done (or error).
 
 Kept separate from the web layer so the gate script, evals and tests run the exact same path.
 Clients get generic error messages; details go to the server log only.
@@ -11,6 +11,7 @@ import time
 from typing import Iterator
 
 from app import guardrail
+from app.controls import controls_event
 from app.llm import LLM
 from app.prompt import OutputGuard, build_user_message, extract_citations, system_prompt
 from app.retrieve import Hit, Mode, Retriever
@@ -65,6 +66,7 @@ def answer_events(
         for n, h in enumerate(hits, start=1)
     ]
     yield "sources", sources
+    yield "controls", controls_event(hits)  # deterministic NCA ECC mapping; never calls a model
 
     user_msg = build_user_message(question.strip(), hits)
     attempt = _Attempt()

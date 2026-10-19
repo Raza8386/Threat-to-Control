@@ -56,8 +56,8 @@ def test_sources_are_delimited_as_data(retriever):  # noqa: F811
 def test_pipeline_event_order(retriever):  # noqa: F811
     events = list(answer_events("What does CISA require for CVE-2015-5477?", retriever, FakeLLM()))
     names = [e for e, _ in events]
-    assert names[0] == "guardrail" and names[1] == "sources" and names[-1] == "done"
-    assert set(names[2:-1]) == {"token"}
+    assert names[0] == "guardrail" and names[1] == "sources" and names[2] == "controls" and names[-1] == "done"
+    assert set(names[3:-1]) == {"token"}
     done = events[-1][1]
     assert done["cited"] and not done["invalid_citations"] and done["blocked"] is False
     sources = events[1][1]

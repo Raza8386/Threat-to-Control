@@ -1,0 +1,103 @@
+# NCA Essential Cybersecurity Controls, ECC-2:2024 — catalogue used for threat -> control mapping.
+#
+# Structure (4 domains, 28 subdomains) checked against the official NCA publication.
+# Subcontrol titles are short PARAPHRASES for navigation, not the official wording: always read the
+# official text before relying on a control. Only subcontrols referenced by crosswalk.yaml are listed;
+# other mappings point at the subdomain.
+#
+# Pattern in ECC-2:2024: x-y-1 define and approve requirements, x-y-2 implement them,
+# x-y-3 minimum content (with subcontrols x-y-3-n), x-y-4 periodic review.
+# In the KSA GRC Assurance Pack these ids correspond to urn:razagrc:risk:req_node:nca-ecc:<id>.
+
+framework:
+  id: nca-ecc-2-2024
+  name: NCA Essential Cybersecurity Controls (ECC-2:2024)
+  publisher: National Cybersecurity Authority (NCA), Saudi Arabia
+  url: https://cdn.nca.gov.sa/api/files/public/upload/86e09090-44e4-481f-bc28-355673607654_ECC--2024-EN.pdf
+  disclaimer: >-
+    Control titles are paraphrased for navigation. Refer to the official NCA publication for the
+    authoritative requirement text. This mapping is decision support, not a compliance opinion.
+
+domains:
+  "1": Cybersecurity Governance
+  "2": Cybersecurity Defense
+  "3": Cybersecurity Resilience
+  "4": Third-Party and Cloud Computing Cybersecurity
+
+subdomains:
+  1-1: Cybersecurity Strategy
+  1-2: Cybersecurity Management
+  1-3: Cybersecurity Policies and Procedures
+  1-4: Cybersecurity Roles and Responsibilities
+  1-5: Cybersecurity Risk Management
+  1-6: Cybersecurity in Information and Technology Project Management
+  1-7: Compliance with Cybersecurity Standards, Laws and Regulations
+  1-8: Periodical Cybersecurity Review and Audit
+  1-9: Cybersecurity in Human Resources
+  1-10: Cybersecurity Awareness and Training Program
+  2-1: Asset Management
+  2-2: Identity and Access Management
+  2-3: Information System and Processing Facilities Protection
+  2-4: Email Protection
+  2-5: Networks Security Management
+  2-6: Mobile Devices Security
+  2-7: Data and Information Protection
+  2-8: Cryptography
+  2-9: Backup and Recovery Management
+  2-10: Vulnerabilities Management
+  2-11: Penetration Testing
+  2-12: Cybersecurity Event Logs and Monitoring Management
+  2-13: Cybersecurity Incident and Threat Management
+  2-14: Physical Security
+  2-15: Web Application Security
+  3-1: Cybersecurity Resilience Aspects of Business Continuity Management
+  4-1: Third-Party Cybersecurity
+  4-2: Cloud Computing and Hosting Cybersecurity
+
+# Paraphrased subcontrol titles (only those the crosswalk uses).
+controls:
+  1-10-3-1: Awareness of phishing and secure email handling
+  1-10-3-3: Awareness of safe internet browsing
+  2-2-3-1: User authentication based on user identity and password management
+  2-2-3-2: Multi-factor authentication for remote and privileged access
+  2-2-3-3: Access authorisation on need-to-know, least privilege and segregation of duties
+  2-2-3-4: Privileged access management
+  2-2-3-5: Periodic review of identities and access rights
+  2-3-3-1: Advanced, centrally managed malware protection for workstations and servers
+  2-3-3-2: Restriction and protection of external storage media
+  2-3-3-3: Patch management for systems, applications and devices
+  2-4-3-1: Email filtering for phishing and spam
+  2-4-3-2: Multi-factor authentication for remote and webmail email access
+  2-4-3-4: Protection of email against advanced persistent threats
+  2-4-3-5: Email domain validation (SPF, DKIM, DMARC)
+  2-5-3-1: Network segmentation with firewalls and defence in depth
+  2-5-3-2: Isolation of production from development and test networks
+  2-5-3-3: Secure browsing and restriction of high-risk websites
+  2-5-3-5: Management and restriction of network services, protocols and ports
+  2-5-3-6: Intrusion prevention systems
+  2-5-3-7: Secure Domain Name Service (DNS)
+  2-5-3-8: Protection of the browsing channel against advanced persistent threats
+  2-5-3-9: Protection against distributed denial-of-service (DDoS) attacks
+  2-8-3-1: Approved cryptographic solutions used within their limits
+  2-8-3-2: Secure cryptographic key management across the lifecycle
+  2-8-3-3: Encryption of data in transit and at rest by classification
+  2-9-3-1: Backup scope covering critical information and technology assets
+  2-9-3-2: Rapid recovery of data and systems after incidents
+  2-9-3-3: Periodic testing of backup recovery
+  2-10-3-1: Periodic vulnerability assessment and detection
+  2-10-3-2: Classification of vulnerabilities by severity
+  2-10-3-3: Risk-based remediation of vulnerabilities
+  2-10-3-5: Subscription to trusted sources of vulnerability information
+  2-11-3-2: Periodic penetration testing
+  2-12-3-1: Event logging on critical information assets
+  2-12-3-2: Logging of privileged account and remote access activity
+  2-12-3-4: Continuous monitoring of event logs
+  2-12-3-5: Retention of event logs for at least 12 months
+  2-13-3-1: Incident response plans and escalation procedures
+  2-13-3-5: Collection and handling of threat intelligence
+  2-15-3-1: Web application firewall
+  2-15-3-2: Multi-tier web application architecture
+  2-15-3-3: Secure protocols such as HTTPS
+  2-15-3-5: User authentication for web applications based on impact assessment
+  4-1-3-1: Cyber risk assessment of third parties before contracting
+  4-2-3-2: Isolation of the entity's cloud environment from other tenants

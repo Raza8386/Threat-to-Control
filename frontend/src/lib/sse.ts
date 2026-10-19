@@ -1,6 +1,6 @@
 import type { ChatEvent } from "./types";
 
-const KNOWN = new Set(["guardrail", "sources", "token", "reset", "error", "done"]);
+const KNOWN = new Set(["guardrail", "sources", "controls", "token", "reset", "error", "done"]);
 
 /**
  * Parse a buffer of server-sent events. Returns the complete events and the unparsed remainder

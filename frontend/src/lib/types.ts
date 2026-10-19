@@ -32,9 +32,34 @@ export interface Done {
   truncated?: boolean;
 }
 
+export interface ControlBasis {
+  n: number; // source number in the evidence rail
+  ref_id: string;
+  via: string; // "M1032 Multi-factor Authentication", "OWASP A03 crosswalk", "KEV crosswalk", "T1566 technique crosswalk"
+  rationale: string;
+}
+
+export interface EccControl {
+  ecc_id: string;
+  title: string;
+  subdomain_id: string;
+  subdomain: string;
+  domain: string;
+  primary: boolean;
+  basis: ControlBasis[];
+}
+
+export interface ControlsPayload {
+  framework: string;
+  framework_url: string;
+  note: string;
+  controls: EccControl[];
+}
+
 export type ChatEvent =
   | { event: "guardrail"; data: Guardrail }
   | { event: "sources"; data: Source[] }
+  | { event: "controls"; data: ControlsPayload }
   | { event: "token"; data: { text: string } }
   | { event: "reset"; data: { reason: "refusal" | "withheld" } }
   | { event: "error"; data: { message: string; code?: string } }
