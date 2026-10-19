@@ -120,3 +120,10 @@ def test_error_event_carries_code_but_generic_message(retriever):  # noqa: F811
     events = list(answer_events("How do attackers perform Kerberoasting?", retriever, FailingLLM()))
     name, data = events[-1]
     assert name == "error" and data["code"] == "credits" and "credit" not in data["message"].lower()
+
+
+def test_api_key_whitespace_is_stripped(monkeypatch):
+    from app.llm import ClaudeLLM
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", ' "sk-ant-test" \n')
+    assert ClaudeLLM("claude-haiku-5-5")._client.api_key == "sk-ant-test"

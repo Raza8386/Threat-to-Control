@@ -160,7 +160,8 @@ def error_code(exc: Exception) -> str:
     if "timeout" in name.lower() or "timed out" in text:
         return "timeout"
     if name == "APIConnectionError":
-        return "network"
+        cause = type(exc.__cause__).__name__ if exc.__cause__ else ""
+        return "config" if cause == "LocalProtocolError" else "network"  # bad header, e.g. malformed API key
     return "other"
 
 

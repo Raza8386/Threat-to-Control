@@ -41,11 +41,14 @@ class ClaudeLLM:
     def __init__(self, model: str):
         import anthropic
 
-        if not os.getenv("ANTHROPIC_API_KEY"):
+        # Strip whitespace and quotes: a key pasted into a dashboard often carries a trailing newline,
+        # which makes every call fail as a "connection error" (illegal header value).
+        key = os.getenv("ANTHROPIC_API_KEY", "").strip().strip("'\"")
+        if not key:
             raise RuntimeError("ANTHROPIC_API_KEY is not set. Add it to backend/.env")
         self.model = model
         # Bounded waits and retries: a hung upstream must not hold a request (or a worker) open.
-        self._client = anthropic.Anthropic(timeout=float(os.getenv("LLM_TIMEOUT_S", "45")), max_retries=2)
+        self._client = anthropic.Anthropic(api_key=key, timeout=float(os.getenv("LLM_TIMEOUT_S", "45")), max_retries=2)
         self._usage = Usage()
         self.stop_reason: str | None = None
         self.stop_category: str | None = None
